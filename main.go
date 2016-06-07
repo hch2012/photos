@@ -11,21 +11,28 @@ import(
 	"path"
 	"fmt"
 )
-const(
-	UPLOAD_DIR="./uploads"
-	HTML_DIR="./html"
-	STATIC_DIR="./static"
-)
+
+var UPLOAD_DIR string
+var HTML_DIR string
+var STATIC_DIR string
 var templates =make(map[string]*template.Template)
 
 func init() {
+	path:=os.Args[1]
+	UPLOAD_DIR=path+"uploads"
+	HTML_DIR=path+"html"
+	STATIC_DIR=path+"static"
+	fmt.Println(HTML_DIR)
 	listFile(HTML_DIR,"")
+	
+	
 	for key,_:=range templates{
 		fmt.Println(key)
 	}
 }
 
 func listFile(dirPath string ,keyNamePre string) {
+	fmt.Println(dirPath)
 	files,err:=ioutil.ReadDir(dirPath)
 	check(err)
 	for _,file:=range files{
@@ -89,7 +96,7 @@ func uploadPicHandler(w http.ResponseWriter ,r *http.Request) {
 		defer newFile.Close()
 		_,err =io.Copy(newFile,file)
 		check(err)
-		http.Redirect(w,r,"/view?id="+removePrefix(newFile.Name(),UPLOAD_DIR[2:]),http.StatusFound)
+		http.Redirect(w,r,"/view?id="+removePrefix(newFile.Name(),UPLOAD_DIR),http.StatusFound)
 	}
 }
 func removePrefix(fullName string,prefix string) string {
