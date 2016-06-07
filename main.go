@@ -15,6 +15,7 @@ import(
 var UPLOAD_DIR string
 var HTML_DIR string
 var STATIC_DIR string
+var HOST_URL string
 var templates =make(map[string]*template.Template)
 
 func init() {
@@ -22,17 +23,10 @@ func init() {
 	UPLOAD_DIR=path+"uploads"
 	HTML_DIR=path+"html"
 	STATIC_DIR=path+"static"
-	fmt.Println(HTML_DIR)
 	listFile(HTML_DIR,"")
-	
-	
-	for key,_:=range templates{
-		fmt.Println(key)
-	}
 }
 
 func listFile(dirPath string ,keyNamePre string) {
-	fmt.Println(dirPath)
 	files,err:=ioutil.ReadDir(dirPath)
 	check(err)
 	for _,file:=range files{
@@ -54,9 +48,7 @@ func renderHtml(w http.ResponseWriter,temp string,params map[string]interface{})
 	if params==nil{
 		params=make(map[string]interface{})
 	}
-	fmt.Println("-------------------------")
-	fmt.Println(templates[temp+".html"])
-
+	params["HOST_URL"]=HOST_URL
 	err:=templates[temp+".html"].Execute(w,params)
 	check(err)
 }
@@ -70,8 +62,8 @@ func isExists(path string) bool{
 }
 
 func main() {
-	http.HandleFunc("/upload",uploadPicHandler)
-	http.HandleFunc("/view",viewHandler)
+	http.HandleFunc("/upload",ctxFilter(uploadPicHandler))
+	http.HandleFunc("/view",ctxFilter(viewHandler))
 	log.Fatal(http.ListenAndServe(":8080",nil))
 }
 
@@ -81,6 +73,15 @@ func check(err error) {
 	}
 }
 
+func ctxFilter(fn http.HandlerFunc) http.HandlerFunc{
+	return func(w http.ResponseWriter,r *http.Request){
+		fmt.Println(r.Host)
+		if HOST_URL=="" {
+			HOST_URL=r.Host
+		}
+		fn(w,r)
+	}
+}
 
 func uploadPicHandler(w http.ResponseWriter ,r *http.Request) {
 	if r.Method=="GET" {
